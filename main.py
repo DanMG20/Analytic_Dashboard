@@ -1,8 +1,8 @@
-from api.youtube_client import YouTubeClient
+from api.youtube_data import YouTubeData
 
 def main():
-    yt = YouTubeClient()
-    channel_info = yt.get_my_channel()
+    yt = YouTubeData()
+    channel_info = yt.get_channel_info()
 
     print(channel_info)
 
