@@ -3,5 +3,5 @@ from pydantic import BaseModel
 
 class VideoInfo(BaseModel):
 
-    Id : str
+    id : str
     title : str

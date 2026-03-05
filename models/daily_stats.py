@@ -9,4 +9,4 @@ class DailyStats(BaseModel):
     date : str
     views : int
     subs_gained : int
-    avg__view_duration: int  
+    avg_view_duration: int  

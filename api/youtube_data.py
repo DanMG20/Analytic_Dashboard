@@ -1,145 +1,100 @@
-from typing import  Optional
+from typing import Optional, List, Dict, Any
+from googleapiclient.errors import HttpError
+
+from api.youtube_auth import YoutubeAuth
 from models.channel_info import ChannelInfo
 from models.video_info import VideoInfo
-from api.youtube_auth import YoutubeAuth
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-
 class YouTubeData:
-    """
-    Responsible to interact with Youtube Data API v3.
-    """
-
+    """Gateway to interact with YouTube Data API v3."""
 
     def __init__(self, auth_client: YoutubeAuth):
-        """
-        Initializes the service using an authenticated client.
-        """
-        self.service = auth_client.get_service("youtube","v3")
-        self.uploads_playlist_id = None
-
+        """Initializes the service using an authenticated client."""
+        self.service = auth_client.get_service("youtube", "v3")
 
     def get_channel_info(self) -> Optional[ChannelInfo]:
-        """
-        Fetches channel info and returns a validated ChannelInfo object.
+        """Fetches channel info and its uploads playlist ID."""
+        try:
+            response = self._request_channel_data()
+            items = response.get("items", [])
 
-        Returns:
-            Optional[ChannelInfo]: The validated data or None if not found.
-        """
-        response = self._request_channel_data()
+            if not items:
+                logger.warning("No channel data found.")
+                return None
 
-        items = response.get(["items"][0],[])
-
-        if not items:
-            logger.warning("No channel data found for the authenticated user.")
+            logger.info("Channel info successfully obtained.")
+            return self._map_channel_info(items[0])
+        except (HttpError, KeyError, IndexError) as error:
+            logger.error(f"Error fetching channel info: {error}")
             return None
-        
-        item = items[0]
-        logger.info("YT Data Info succesfully obtained")
-        return self._map_channel_info(item)
 
-
-
-    def get_all_videos_info(self):
+    def get_all_videos_info(self, playlist_id: str) -> Optional[List[VideoInfo]]:
         """
-
-        Fetches all uploaded videos Id and name an returns a validated list of VideoInfo objects.
-
+        Fetches all videos from a specific playlist.
+        Args:
+            playlist_id: The ID of the 'uploads' playlist.
         """
-        data = self._request_all_videos()
+        try:
+            raw_videos = self._fetch_all_playlist_items(playlist_id)
+            if not raw_videos:
+                logger.warning("No videos found in playlist.")
+                return None
 
-        if not data:
-            logger.warning("No videos found for the authenticated user.")
+            return [self._map_video_info(item) for item in raw_videos]
+        except HttpError as error:
+            logger.error(f"Error fetching video list: {error}")
             return None
-    
-        logger.info("VIdeo list succesfully obtained")
-        return self._build_video_list(data)
 
-
-    def _request_all_videos(
-            self,
-            page_token: str = None,
-            acumulated_data: list = None
-            ) -> list:
-        """
-        Request all upload video list to Youtube API.
-        """
-        if acumulated_data is None: 
-            acumulated_data = []
-
-        response = self.service.playlistItems().list(
-            part="snippet",
-            playlistId = self.uploads_playlist_id,
-            pageToken = page_token,
-            maxResults = 5,
-        ).execute()
-
-        items = response.get("items",[])
-        acumulated_data.extend(items)
-        next_token =response.get("nextPageToken")
-        
-        if next_token: 
-            return self._request_all_videos(
-                page_token=next_token,
-                acumulated_data=acumulated_data
-                )
-        else: 
-            return acumulated_data
-
-    
-
-    def _request_channel_data(self) -> dict:
-        """
-        Executes the raw request to YouTube API.
-        """
+    def _request_channel_data(self) -> Dict[str, Any]:
+        """Raw request for channel statistics and content details."""
         return self.service.channels().list(
             part="snippet,contentDetails,statistics",
             mine=True
         ).execute()
-    
-    def _map_channel_info(self,item: dict[str]) -> ChannelInfo:
-        """
-        Maps the raw API JSON to a ChannelInfo model.
-        """
+
+    def _fetch_all_playlist_items(self, playlist_id: str) -> List[Dict[str, Any]]:
+        """Iteratively fetches all items from a playlist using page tokens."""
+        all_items: List[Dict[str, Any]] = []
+        next_page_token: Optional[str] = None
+
+        while True:
+            response = self.service.playlistItems().list(
+                part="snippet,contentDetails",
+                playlistId=playlist_id,
+                pageToken=next_page_token,
+                maxResults=50
+            ).execute()
+
+            all_items.extend(response.get("items", []))
+            next_page_token = response.get("nextPageToken")
+
+            if not next_page_token:
+                break
+        
+        return all_items
+
+    def _map_channel_info(self, item: Dict[str, Any]) -> ChannelInfo:
+        """Maps raw API JSON to ChannelInfo and extracts internal metadata."""
         snippet = item["snippet"]
         stats = item["statistics"]
-        content = item["contentDetails"]
-        related = content["relatedPlaylists"]
-        self.uploads_playlist_id = related["uploads"]
+        uploads_id = item["contentDetails"]["relatedPlaylists"]["uploads"]
 
         return ChannelInfo(
-            id= item["id"],
-            name = snippet["title"],
+            id=item["id"],
+            name=snippet["title"],
             creation_date=snippet["publishedAt"],
             total_views=int(stats["viewCount"]),
-            total_suscribers=int(stats["subscriberCount"]),
-            total_videos= int(stats["videoCount"]),     
+            total_subscribers=int(stats["subscriberCount"]),
+            total_videos=int(stats["videoCount"]),
+            uploads_playlist_id=uploads_id 
         )
-    
 
-
-    def _map_video_info(self, video: dict[str]) -> VideoInfo:
-        """
-        Maps the raw API JSON videos info to a VideoInfo model. 
-        """
-        Id = video["id"]
-        title = video["snippet"]["title"]
-        
+    def _map_video_info(self, item: Dict[str, Any]) -> VideoInfo:
+        """Maps raw API JSON playlist item to VideoInfo model."""
         return VideoInfo(
-            Id= Id,
-            title= title
+            id=item["contentDetails"]["videoId"],
+            title=item["snippet"]["title"]
         )
-
-    def _build_video_list(self, videos)-> list[VideoInfo]:
-        """
-        Builds the list of videos 
-        Returns:
-            list[VideoInfo]
-        """
-        data = []
-        for video in videos:
-            video_info = self._map_video_info(video)
-            data.append(video_info)
-        return data 

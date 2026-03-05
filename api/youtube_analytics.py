@@ -1,99 +1,117 @@
+from datetime import date
+from typing import Any, List, Dict
+from googleapiclient.errors import HttpError
+
 from api.youtube_auth import YoutubeAuth
 from models.daily_stats import DailyStats
-from typing import Any ,Optional
-from datetime import date
+from models.video_stats import VideoStats
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-
 class YouTubeAnalytics:
-    """
-    Gateway to interact with Youtube Analytics API v2. 
-    """
+    """Gateway to interact with YouTube Analytics API v2."""
 
+    def __init__(self, auth_client: YoutubeAuth):
+        self.service = auth_client.get_service("youtubeAnalytics", "v2")
 
-    def __init__(self, outh_client: YoutubeAuth):
+    def get_daily_stats(self, start_date: date, end_date: date) -> List[DailyStats]:
+        """Fetches historical channel data."""
+        try:
+            response = self._fetch_daily_report(start_date, end_date)
+            rows = response.get("rows", [])
+            return [self._map_daily_row(row) for row in rows]
+        except HttpError as error:
+            logger.error(f"API Error fetching daily stats: {error}")
+            return []
+
+    def get_video_stats(
+        self, 
+        start_date: date, 
+        end_date: date, 
+        video_ids: List[str]
+    ) -> List[VideoStats]:
         """
-        Initializes the service using an authenticated client.
+        Fetches stats for ALL provided video IDs. 
+        Ensures the output list matches the input list size (Zero-filling).
         """
-        self.service = outh_client.get_service("youtubeAnalytics","v2")
+        if not video_ids:
+            return []
 
-    def get_daily_stats(self,start_date,end_date) -> Optional[DailyStats]:
-        """
-        Fetches historical data sorted by date. 
+        raw_results_map = self._fetch_all_batches_as_map(start_date, end_date, video_ids)
 
-        Returns:
-            Optional[HistoricalDataPerDay]: The validated data or None if not found. 
-        """
-        response = self._request_historical_daily_stats_per_date(
-            start_date=start_date,
-            end_date= end_date)
+        final_stats = []
+        for vid_id in video_ids:
+            stats = raw_results_map.get(
+                vid_id, 
+                VideoStats(id=vid_id, views=0, subs_gained=0)
+            )
+            final_stats.append(stats)
+            
+        logger.info(f"Final reconciliation complete: {len(final_stats)} videos processed.")
+        return final_stats
 
-        rows = response.get('rows',[])
+    def _fetch_all_batches_as_map(
+        self, 
+        start: date, 
+        end: date, 
+        video_ids: List[str]
+    ) -> Dict[str, VideoStats]:
+        """Fetches all batches and returns a dictionary for fast lookup."""
+        results_map: Dict[str, VideoStats] = {}
+        chunks = [video_ids[i:i + 200] for i in range(0, len(video_ids), 200)]
 
-        if not rows: 
-            logger.warning("Data not found for the autenticated user")
-            return None 
-        logger.info("Historical data per day obtained")
+        for chunk in chunks:
+            try:
+                batch_rows = self._fetch_video_batch(start, end, chunk)
+                for row in batch_rows:
+                    stats = self._map_video_row(row)
+                    results_map[stats.id] = stats
+            except HttpError as error:
+                logger.error(f"Error in batch request: {error}")
+                
+        return results_map
 
-        return self._build_data(rows=rows)
-
-    def _request_historical_daily_stats_per_date(
-            self, 
-            start_date: date, 
-            end_date : date, 
-        ) -> dict[str, Any]:
-        """
-        Retrieves historical metrics per day in a specific date range.
-
-        """
-        return self.service.reports().query(
-            ids= "channel==MINE", 
-            startDate = start_date.isoformat(),
-            endDate = end_date.isoformat(),
-            metrics = "views,subscribersGained,averageViewDuration",
-            dimensions = "day",
-            sort ="day"
+    def _fetch_video_batch(
+        self, 
+        start: date, 
+        end: date, 
+        ids: List[str]
+    ) -> List[List[Any]]:
+        """Queries metrics for a specific set of video IDs."""
+        id_filter = ",".join(ids)
+        response = self.service.reports().query(
+            ids="channel==MINE",
+            startDate=start.isoformat(),
+            endDate=end.isoformat(),
+            dimensions="video",
+            metrics="views,subscribersGained",
+            filters=f"video=={id_filter}"
         ).execute()
-    
-    
-    def _map_daily_stats(
-            self,
-            row:list[str]) -> DailyStats:
-        """
-        Maps the raw API JSON data to a DailyStats.
-        """
+        
+        return response.get("rows", [])
+
+    def _fetch_daily_report(self, start: date, end: date) -> Dict[str, Any]:
+        return self.service.reports().query(
+            ids="channel==MINE",
+            startDate=start.isoformat(),
+            endDate=end.isoformat(),
+            metrics="views,subscribersGained,averageViewDuration",
+            dimensions="day",
+            sort="day"
+        ).execute()
+
+    def _map_daily_row(self, row: List[Any]) -> DailyStats:
         return DailyStats(
-            date = row[0],
-            views = int(row[1]),
-            subs_gained = int(row[2]),
-            avg__view_duration= int(row[3])
-
+            date=row[0],
+            views=int(row[1]),
+            subs_gained=int(row[2]),
+            avg_view_duration=int(row[3])
         )
-    
-    def _build_data(self, rows)-> list[str,int,int,int]:
-        """
-        Builds the list of metrics.
-        Returns:
-            list[str,int,int,int]: range for daily metrics
-        """
-        data = []
-        for row in rows:
-            day_stats = self._map_daily_stats(row)
-            data.append(day_stats)
-        return data 
 
-
-
-    def _request_video_stats(self, id) -> dict[str, Any]:
-        logger.warning("Cambiar a start date a fecha de creacion de canal")
-        return self.service.reports().query(
-            ids= "channel==MINE", 
-            filters=f"video=={id}",
-            metrics = "views,subscribersGained,averageViewDuration",
-            dimensions = "video",
-            startDate = "2021-09-29",
-            endDate= "2026-05-03"
-        ).execute()
-    
+    def _map_video_row(self, row: List[Any]) -> VideoStats:
+        return VideoStats(
+            id=str(row[0]),
+            views=int(row[1]),
+            subs_gained=int(row[2])
+        )
