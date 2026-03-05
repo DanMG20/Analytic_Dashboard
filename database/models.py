@@ -1,19 +1,15 @@
 from datetime import date
 from pydantic import BaseModel, Field, ConfigDict
 
-"""
-Definición de los modelos de datos para el sistema de estadísticas.
-Estos modelos validan la información antes de ser procesada o guardada.
-"""
 
-class ChannelStats(BaseModel): 
+class ChannelStats(BaseModel):
     """
-    Información general y estado actual del canal.
+    Represents the global state and metadata of a YouTube channel.
     """
     model_config = ConfigDict(from_attributes=True)
 
     name: str
-    creation_date: date  # Pydantic lo validará aunque SQLite lo guarde como texto
+    creation_date: date
     total_views: int = Field(ge=0)
     total_subscribers: int = Field(ge=0)
     total_videos: int = Field(ge=0)
@@ -22,18 +18,18 @@ class ChannelStats(BaseModel):
 
 class DailyMetrics(BaseModel):
     """
-    Métricas diarias históricas para análisis de tendencias.
+    Represents historical daily performance metrics.
     """
     model_config = ConfigDict(from_attributes=True)
 
     fetch_date: date
-    views: int = Field(ge=0) # Cambiado a int para permitir cálculos estadísticos
+    views: int = Field(ge=0)
     subscribers_gained: int
 
 
 class VideoMetrics(BaseModel):
     """
-    Métricas específicas por cada video subido.
+    Represents performance metrics for individual video assets.
     """
     model_config = ConfigDict(from_attributes=True)
 
