@@ -26,7 +26,7 @@ class YouTubeAnalytics:
         Returns:
             Optional[HistoricalDataPerDay]: The validated data or None if not found. 
         """
-        response = self._request_historical_data_per_date(
+        response = self._request_historical_daily_stats_per_date(
             start_date=start_date,
             end_date= end_date)
 
@@ -39,7 +39,7 @@ class YouTubeAnalytics:
 
         return self._build_data(rows=rows)
 
-    def _request_historical_data_per_date(
+    def _request_historical_daily_stats_per_date(
             self, 
             start_date: date, 
             end_date : date, 
@@ -56,7 +56,8 @@ class YouTubeAnalytics:
             dimensions = "day",
             sort ="day"
         ).execute()
-
+    
+    
     def _map_daily_stats(
             self,
             row:list[str]) -> DailyStats:
@@ -85,3 +86,14 @@ class YouTubeAnalytics:
 
 
 
+    def _request_video_stats(self, id) -> dict[str, Any]:
+        logger.warning("Cambiar a start date a fecha de creacion de canal")
+        return self.service.reports().query(
+            ids= "channel==MINE", 
+            filters=f"video=={id}",
+            metrics = "views,subscribersGained,averageViewDuration",
+            dimensions = "video",
+            startDate = "2021-09-29",
+            endDate= "2026-05-03"
+        ).execute()
+    

@@ -12,7 +12,6 @@ Attributes:
     total_views: Lifetime view count.
     total_subscribers: Current subscriber count.
     total_videos: Number of public videos uploaded.
-    uploads_playlist_id: ID of the playlist containing uploads.
 """
     id: str
     name: str
@@ -20,4 +19,3 @@ Attributes:
     total_views: int
     total_suscribers : int
     total_videos: int
-    uploads_playlist_id : str
