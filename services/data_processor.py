@@ -1,49 +1,30 @@
-from api.youtube_analytics import YouTubeAnalytics
-from api.youtube_data import YouTubeData
 from database.models import ChannelStats
+from datetime import date
+from utils.logger import get_logger
+logger = get_logger(__name__)
+
 class DataProcessor:
+    """Process the data obtained from youtube API's."""
 
-    def __init__(
-            self,
-            youtube_data: YouTubeData, 
-            youtube_analytics : YouTubeAnalytics):
-        
-        youtube_data = youtube_data
-        youtube_analytics = youtube_analytics
+    def __init__(self,data):
+        self.data = data
 
-    channel_info = youtube_data.get_channel_info()
-
-
-    def _process_channel_stats(self):
-
-
-
-
-        return ChannelStats
-
-    #print(channel_info)
-
-    # DATA API TEST
-    #videos_metadata = youtube_data.get_all_videos_info(channel_info.uploads_playlist_id)
-    #for video in videos_metadata: 
-        #print(video)
-
-
-
-    init_date = date.fromisoformat("2021-09-29")
-    end_date = date.fromisoformat("2026-02-28")
-
-    # DAILY STATS TEST
-    stats_list = youtube_analytics.get_daily_stats(init_date, end_date)
-    for day in stats_list:
-        print(f"Día: {day.date} | Views: {day.views}")  
-
-    today = date.today()
-     # VIDEO STATS TEST
-
-    #video_ids = [v.id for v in videos_metadata]
-     
-    #video_stats =youtube_analytics.get_video_stats(init_date,today,video_ids)
     
-    #for index,video in enumerate(video_stats): 
-        #print(f"Index: {index} | Id: {video.id} | Views: {video.views} | Subs: {video.subs_gained}")  
+    def _process_channel_stats(self):
+        channel = self.youtube_data.get_channel_data()
+        logger.info("Channel Stats succesfully processed")
+        logger.warning(" not sure if date is correct")
+        return ChannelStats(
+            name = channel.name,
+            creation_date=channel.creation_date,
+            total_views= channel.total_views,
+            total_subscribers= channel.total_subscribers,
+            total_videos=channel.total_videos,
+            last_updated= date.today()
+        )
+      
+    def _process_daily_metrics(self):
+        daily_metrics = self.youtube_analytics.get_daily_stats(init_)
+
+
+    

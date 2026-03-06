@@ -3,7 +3,7 @@ from googleapiclient.errors import HttpError
 
 from api.youtube_auth import YoutubeAuth
 from models.channel_info import ChannelInfo
-from models.video_info import VideoInfo
+from models.video_info import VideoMetadata
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -15,7 +15,7 @@ class YouTubeData:
         """Initializes the service using an authenticated client."""
         self.service = auth_client.get_service("youtube", "v3")
 
-    def get_channel_info(self) -> Optional[ChannelInfo]:
+    def get_channel_data(self) -> Optional[ChannelInfo]:
         """Fetches channel info and its uploads playlist ID."""
         try:
             response = self._request_channel_data()
@@ -31,7 +31,7 @@ class YouTubeData:
             logger.error(f"Error fetching channel info: {error}")
             return None
 
-    def get_all_videos_info(self, playlist_id: str) -> Optional[List[VideoInfo]]:
+    def get_all_videos_metadata(self, playlist_id: str) -> Optional[List[VideoMetadata]]:
         """
         Fetches all videos from a specific playlist.
         Args:
@@ -92,9 +92,9 @@ class YouTubeData:
             uploads_playlist_id=uploads_id 
         )
 
-    def _map_video_info(self, item: Dict[str, Any]) -> VideoInfo:
+    def _map_video_info(self, item: Dict[str, Any]) -> VideoMetadata:
         """Maps raw API JSON playlist item to VideoInfo model."""
-        return VideoInfo(
+        return VideoMetadata(
             id=item["contentDetails"]["videoId"],
             title=item["snippet"]["title"]
         )
