@@ -1,6 +1,7 @@
 import sqlite3
 from contextlib import contextmanager
 from typing import Generator
+from datetime import date
 
 
 class DatabaseManager:
@@ -10,6 +11,8 @@ class DatabaseManager:
 
     def __init__(self, db_path: str):
         self._db_path = db_path
+
+        sqlite3.register_adapter(date, lambda d: d.isoformat())
 
     @contextmanager
     def get_connection(self) -> Generator[sqlite3.Connection, None, None]:
@@ -27,4 +30,5 @@ class DatabaseManager:
             connection.rollback()
             raise
         finally:
+            connection.commit()
             connection.close()
