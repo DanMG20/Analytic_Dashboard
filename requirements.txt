@@ -25,7 +25,7 @@ jsonschema==4.26.0
 jsonschema-specifications==2025.9.1
 MarkupSafe==3.0.3
 narwhals==2.17.0
-numpy==2.2.6
+numpy==2.4.2
 oauthlib==3.3.1
 packaging==26.0
 pandas==2.3.3
@@ -48,6 +48,7 @@ requests==2.32.5
 requests-oauthlib==2.0.0
 rpds-py==0.30.0
 rsa==4.9.1
+setuptools==82.0.0
 six==1.17.0
 smmap==5.0.2
 streamlit==1.55.0
@@ -61,3 +62,4 @@ tzlocal==5.3.1
 uritemplate==4.2.0
 urllib3==2.6.3
 watchdog==6.0.0
+wheel==0.46.3

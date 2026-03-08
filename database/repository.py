@@ -33,7 +33,7 @@ class YoutubeRepository:
 
 
         query = """
-        SELECT last_updated FROM channel_stats 
+        SELECT MAX(last_updated) FROM channel_stats 
         """
         cursor = conn.execute(query)
         last_update = cursor.fetchone()
