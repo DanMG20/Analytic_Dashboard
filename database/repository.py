@@ -107,22 +107,29 @@ class YoutubeRepository:
     def _upsert_video_metrics(
             self,
             conn: sqlite3.Connection,
-            metrics : List[VideoMetrics]
-            ): 
-        query = """
-        INSERT OR REPLACE INTO video_metrics 
-        (video_id,
-        title,
-        views,
-        subscribers_gained)
-        VALUES (?,?,?,?)
-        """
-        data = [(
-            metric.video_id,
-            metric.title,
-            metric.views,
-            metric.subscribers_gained,
-        )
-        for metric in metrics]
-        conn.executemany(query,data)
-          
+            metrics: List[VideoMetrics]
+        ) -> None:
+            """
+            Updates video metrics by accumulating new data on conflict.
+            
+            If the video_id already exists, it adds the new views and 
+            subscribers to the existing totals instead of overwriting them.
+            """
+            query = """
+            INSERT INTO video_metrics (video_id, title, views, subscribers_gained)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(video_id) DO UPDATE SET
+                views = video_metrics.views + EXCLUDED.views,
+                subscribers_gained = video_metrics.subscribers_gained + EXCLUDED.subscribers_gained,
+                title = EXCLUDED.title
+            """
+            data = [
+                (
+                    metric.video_id,
+                    metric.title,
+                    metric.views,
+                    metric.subscribers_gained,
+                )
+                for metric in metrics
+            ]
+            conn.executemany(query, data)

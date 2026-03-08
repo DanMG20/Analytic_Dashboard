@@ -1,4 +1,5 @@
 from typing import Optional, List, Dict, Any
+from utils.retry import api_retry
 from googleapiclient.errors import HttpError
 
 from api.youtube_auth import YoutubeAuth
@@ -48,6 +49,7 @@ class YouTubeData:
             logger.error(f"Error fetching video list: {error}")
             return None
 
+    @api_retry
     def _request_channel_data(self) -> Dict[str, Any]:
         """Raw request for channel statistics and content details."""
         return self.service.channels().list(
@@ -61,12 +63,7 @@ class YouTubeData:
         next_page_token: Optional[str] = None
 
         while True:
-            response = self.service.playlistItems().list(
-                part="snippet,contentDetails",
-                playlistId=playlist_id,
-                pageToken=next_page_token,
-                maxResults=50
-            ).execute()
+            response = self._request_one_page_items(playlist_id,next_page_token)
 
             all_items.extend(response.get("items", []))
             next_page_token = response.get("nextPageToken")
@@ -75,6 +72,21 @@ class YouTubeData:
                 break
         
         return all_items
+    
+
+    @api_retry
+    def _request_one_page_items(
+            self, 
+            playlist_id: str , 
+            next_page_token : Optional[str]
+            ) -> Dict[str, Any]:
+            
+        return  (self.service.playlistItems().list(
+                part="snippet,contentDetails",
+                playlistId=playlist_id,
+                pageToken=next_page_token,
+                maxResults=50
+            ).execute())
 
     def _map_channel_info(self, item: Dict[str, Any]) -> ChannelInfo:
         """Maps raw API JSON to ChannelInfo and extracts internal metadata."""

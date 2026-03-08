@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Any, List, Dict
 from googleapiclient.errors import HttpError
-
+from utils.retry import api_retry
 from api.youtube_auth import YoutubeAuth
 from models.daily_stats import DailyStats
 from models.video_stats import VideoStats
@@ -72,6 +72,8 @@ class YouTubeAnalytics:
                 
         return results_map
 
+
+    @api_retry
     def _fetch_video_batch(
         self, 
         start: date, 
@@ -91,6 +93,8 @@ class YouTubeAnalytics:
         
         return response.get("rows", [])
 
+
+    @api_retry
     def _fetch_daily_report(self, start: date, end: date) -> Dict[str, Any]:
         return self.service.reports().query(
             ids="channel==MINE",

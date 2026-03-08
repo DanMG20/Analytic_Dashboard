@@ -1,4 +1,5 @@
 import sys
+import subprocess
 from api.youtube_auth import YoutubeAuth
 from api.youtube_data import YouTubeData
 from api.youtube_analytics import YouTubeAnalytics
@@ -13,9 +14,38 @@ from utils.paths import data_path
 logger = get_logger(__name__)
 
 
-def main():
+def launch_dashboard(wait: bool = True) -> None:
     """
-    Bootstraps the infrastructure and selects the execution mode.
+    Launches the Streamlit UI as a managed subprocess.
+    
+    Using a subprocess avoids the 'ValueError: signal only works in main thread'
+    which occurs when trying to launch Streamlit from a scheduler thread.
+    
+    Args:
+        wait: If True, blocks execution until the dashboard is closed.
+    """
+    dashboard_path = "ui/dashboard.py"
+    
+    # We use sys.executable to ensure we use the same virtual environment
+    cmd = [sys.executable, "-m", "streamlit", "run", dashboard_path]
+    
+    try:
+        if wait:
+            # Manual mode: Wait for the user to finish
+            subprocess.run(cmd, check=True)
+        else:
+            # Scheduled mode: Fire and forget so the scheduler stays alive
+            subprocess.Popen(cmd)
+    except Exception as e:
+        logger.error(f"Failed to launch dashboard: {e}")
+
+
+def build_updater() -> Updater:
+    """
+    Dependency injection container for the application services.
+    
+    Returns:
+        A fully configured Updater instance.
     """
     db_path = data_path("youtube_stats.db")
     db_manager = DatabaseManager(db_path)
@@ -26,17 +56,44 @@ def main():
     yt_analytics = YouTubeAnalytics(youtube_auth)
     data_builder = DataBuilder(yt_data, yt_analytics)
 
-    updater = Updater(
+    return Updater(
         repository=repository,
         data_builder=data_builder,
         yt_data=yt_data
     )
 
+
+def main() -> None:
+    """
+    Main orchestration logic. 
+    
+    Configured to trigger at 11:00 AM. In scheduled mode, it 
+    redefines the update task to include the UI launch.
+    """
+    updater = build_updater()
+
     if "--scheduled" in sys.argv:
+        # We redefine the run method so the scheduler opens the UI
+        original_run = updater.run
+
+        def task_with_ui():
+            original_run()
+            logger.info("Daily update finished. Opening dashboard...")
+            # Use wait=False because we are inside a background thread
+            launch_dashboard(wait=False)
+
+        updater.run = task_with_ui
+        
         scheduler = Scheduler(updater)
-        scheduler.start(hour=3, minute=0)
-    else:
-        updater.run()
+        # Set to 11:00 AM or your preferred testing time
+        scheduler.start(hour=11, minute=0)
+        return
+
+    updater.run()
+
+    logger.info("Launching dashboard...")
+    # Manual mode: we wait for the process to keep the terminal busy
+    launch_dashboard(wait=True)
 
 
 if __name__ == "__main__":

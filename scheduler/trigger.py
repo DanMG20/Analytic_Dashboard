@@ -24,7 +24,7 @@ class Scheduler:
         self.updater = updater
         self.scheduler = BlockingScheduler()
 
-    def start(self, hour: int = 3, minute: int = 0) -> None:
+    def start(self, hour: int = 11, minute: int = 0) -> None:
         """
         Configures and starts the cron job.
 

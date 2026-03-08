@@ -1,4 +1,3 @@
-3.14_venv/
+venv/
 credentials/
 __pycache__/
-INSTRUCTIONS.md
