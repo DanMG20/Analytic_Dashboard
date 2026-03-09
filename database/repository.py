@@ -1,5 +1,5 @@
 import sqlite3
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from database.connection import DatabaseManager
 from datetime import date
 from database.models import ChannelStats, DailyMetrics, VideoMetrics
@@ -20,14 +20,13 @@ class YoutubeRepository:
         run_migrations(self.db)
 
     def get_last_updated_date(self) -> Optional[date]: 
-
+        """Retrieves the most recent update timestamp from the database."""
         try: 
             with self.db.get_connection() as conn: 
                 return self._get_last_updated_date(conn)
-        except Exception as e: 
-            logger.error(f"Failed to get last updated date {e}")
+        except sqlite3.Error as db_error: 
+            logger.error(f"Database error while fetching last updated date: {db_error}")
             raise
-
     
     def _get_last_updated_date(self,conn: sqlite3.Connection) ->date:
 
@@ -133,3 +132,33 @@ class YoutubeRepository:
                 for metric in metrics
             ]
             conn.executemany(query, data)
+
+
+
+
+    def get_all_dashboard_data(self) -> Tuple[Optional[ChannelStats], List[DailyMetrics], List[VideoMetrics]]:
+            """
+            Retrieves all data needed for the dashboard in a single transaction.
+            """
+            try:
+                with self.db.get_connection() as conn:
+                    stats = self._get_channel_stats(conn)
+                    daily = self._get_daily_metrics(conn)
+                    videos = self._get_top_videos(conn)
+                    return stats, daily, videos
+            except sqlite3.Error as db_error:
+                logger.error(f"Failed to fetch dashboard data: {db_error}")
+                return None, [], []
+
+    def _get_channel_stats(self, conn: sqlite3.Connection) -> Optional[ChannelStats]:
+        cursor = conn.execute("SELECT * FROM channel_stats LIMIT 1")
+        row = cursor.fetchone()
+        return ChannelStats(**dict(row)) if row else None
+
+    def _get_daily_metrics(self, conn: sqlite3.Connection) -> List[DailyMetrics]:
+        cursor = conn.execute("SELECT * FROM daily_metrics ORDER BY fetch_date")
+        return [DailyMetrics(**dict(row)) for row in cursor.fetchall()]
+
+    def _get_top_videos(self, conn: sqlite3.Connection) -> List[VideoMetrics]:
+        cursor = conn.execute("SELECT * FROM video_metrics ORDER BY views DESC LIMIT 10")
+        return [VideoMetrics(**dict(row)) for row in cursor.fetchall()]

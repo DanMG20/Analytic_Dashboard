@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import List
 from datetime import date
 from models.channel_info import ChannelInfo
-from models.video_info import VideoMetadata
+from models.video_metadata import VideoMetadata
 from models.daily_stats import DailyStats
 from models.video_stats import VideoStats
 

@@ -16,9 +16,18 @@ class DataBuilder:
 
 
 
-    def build(self, start_date: date, end_date : date) -> RawData:
-        """ Joins all the data in a single object. """
-        channel_data= self.yt_data.get_channel_data()
+def build(self, start_date: date, end_date: date) -> RawData:
+        """
+        Orchestrates data gathering from multiple API sources.
+        
+        Raises:
+            ValueError: If core channel data cannot be retrieved.
+        """
+        channel_data = self.yt_data.get_channel_data()
+        if not channel_data:
+            logger.error("Failed to retrieve channel data. Cannot build RawData.")
+            raise ValueError("Channel data is required to build the dataset.")
+            
         playlist_id = channel_data.uploads_playlist_id
         videos_metadata = self.yt_data.get_all_videos_metadata(playlist_id)
         video_ids = [v.id for v in videos_metadata]

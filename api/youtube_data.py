@@ -4,7 +4,7 @@ from googleapiclient.errors import HttpError
 
 from api.youtube_auth import YoutubeAuth
 from models.channel_info import ChannelInfo
-from models.video_info import VideoMetadata
+from models.video_metadata import VideoMetadata
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
