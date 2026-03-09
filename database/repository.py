@@ -50,7 +50,7 @@ class YoutubeRepository:
                 self._upsert_daily_metrics(conn, daily)
                 self._upsert_video_metrics(conn, videos)
 
-        except Exception as e:
+        except sqlite3.Error as e:
             logger.error(f" Failed to save data {e}")
             raise
 
