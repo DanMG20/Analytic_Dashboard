@@ -1,22 +1,25 @@
-from typing import Optional, List, Dict, Any
-from utils.retry import api_retry
+from typing import Any, Dict, List, Optional
+
 from googleapiclient.errors import HttpError
+
 from api.youtube_auth import YoutubeAuth
+from config import MAX_RESULTS_PER_PAGE, YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION
 from models.channel_info import ChannelInfo
 from models.video_metadata import VideoMetadata
 from utils.logger import get_logger
-
-from config import (
-    YT_API_SERVICE_NAME, YT_API_VERSION, MAX_RESULTS_PER_PAGE, YT_DATA_PART)
+from utils.retry import api_retry
 
 logger = get_logger(__name__)
+
 
 class YouTubeData:
     """Gateway to interact with YouTube Data API v3."""
 
     def __init__(self, auth_client: YoutubeAuth):
         """Initializes the service using an authenticated client."""
-        self.service = auth_client.get_service(YT_API_SERVICE_NAME, YT_API_VERSION)
+        self.service = auth_client.get_service(
+            YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION
+        )
 
     def get_channel_data(self) -> Optional[ChannelInfo]:
         """Fetches channel info and its uploads playlist ID."""
@@ -34,7 +37,9 @@ class YouTubeData:
             logger.error(f"Error fetching channel info: {error}")
             return None
 
-    def get_all_videos_metadata(self, playlist_id: str) -> Optional[List[VideoMetadata]]:
+    def get_all_videos_metadata(
+        self, playlist_id: str
+    ) -> Optional[List[VideoMetadata]]:
         """
         Fetches all videos from a specific playlist.
         Args:
@@ -54,10 +59,11 @@ class YouTubeData:
     @api_retry
     def _request_channel_data(self) -> Dict[str, Any]:
         """Raw request for channel statistics and content details."""
-        return self.service.channels().list(
-            part=YT_DATA_PART,
-            mine=True
-        ).execute()
+        return (
+            self.service.channels()
+            .list(part="snippet,contentDetails,statistics", mine=True)
+            .execute()
+        )
 
     def _fetch_all_playlist_items(self, playlist_id: str) -> List[Dict[str, Any]]:
         """Iteratively fetches all items from a playlist using page tokens."""
@@ -65,7 +71,7 @@ class YouTubeData:
         next_page_token: Optional[str] = None
 
         while True:
-            response = self._request_one_page_items(playlist_id,next_page_token)
+            response = self._request_one_page_items(playlist_id, next_page_token)
 
             all_items.extend(response.get("items", []))
             next_page_token = response.get("nextPageToken")
@@ -74,21 +80,22 @@ class YouTubeData:
                 break
         logger.info("All video's Metadata succesfully obtained")
         return all_items
-    
 
     @api_retry
     def _request_one_page_items(
-            self, 
-            playlist_id: str , 
-            next_page_token : Optional[str]
-            ) -> Dict[str, Any]:
-            
-        return  (self.service.playlistItems().list(
-                part=YT_DATA_PART,
+        self, playlist_id: str, next_page_token: Optional[str]
+    ) -> Dict[str, Any]:
+
+        return (
+            self.service.playlistItems()
+            .list(
+                part="snippet,contentDetails",
                 playlistId=playlist_id,
                 pageToken=next_page_token,
-                maxResults=MAX_RESULTS_PER_PAGE
-            ).execute())
+                maxResults=MAX_RESULTS_PER_PAGE,
+            )
+            .execute()
+        )
 
     def _map_channel_info(self, item: Dict[str, Any]) -> ChannelInfo:
         """Maps raw API JSON to ChannelInfo and extracts internal metadata."""
@@ -103,12 +110,11 @@ class YouTubeData:
             total_views=int(stats["viewCount"]),
             total_subscribers=int(stats["subscriberCount"]),
             total_videos=int(stats["videoCount"]),
-            uploads_playlist_id=uploads_id 
+            uploads_playlist_id=uploads_id,
         )
 
     def _map_video_info(self, item: Dict[str, Any]) -> VideoMetadata:
         """Maps raw API JSON playlist item to VideoInfo model."""
         return VideoMetadata(
-            id=item["contentDetails"]["videoId"],
-            title=item["snippet"]["title"]
+            id=item["contentDetails"]["videoId"], title=item["snippet"]["title"]
         )

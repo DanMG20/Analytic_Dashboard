@@ -2,6 +2,7 @@
 Database tables defined here.
 """
 
+
 def run_migrations(db):
     """Creates the necessary tables if they don't exist."""
     with db.get_connection() as conn:

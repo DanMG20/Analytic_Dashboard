@@ -1,9 +1,10 @@
 from datetime import date
 from typing import Optional, Tuple
+
 from api.data_builder import DataBuilder
-from services.data_processor import DataProcessor
-from database.repository import YoutubeRepository
 from api.youtube_data import YouTubeData
+from database.repository import YoutubeRepository
+from services.data_processor import DataProcessor
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -13,7 +14,7 @@ class Updater:
     """
     Orchestrates the main ETL flow for YouTube statistics.
 
-    This class handles the decision-making process regarding when and 
+    This class handles the decision-making process regarding when and
     what data should be updated based on the current database state.
     """
 
@@ -21,7 +22,7 @@ class Updater:
         self,
         repository: YoutubeRepository,
         data_builder: DataBuilder,
-        yt_data: YouTubeData
+        yt_data: YouTubeData,
     ):
         """
         Initializes the updater with required data and persistence services.
@@ -44,22 +45,20 @@ class Updater:
         """
         logger.info("Starting update cycle...")
 
-        last_updated_str  = self.repository.get_last_updated_date()
-        last_updated = DataProcessor.parse_iso_date(last_updated_str)
+        last_updated_str = self.repository.get_last_updated_date()
+        if last_updated_str is not None:
+            last_updated = DataProcessor.parse_iso_date(last_updated_str)
+        else:
+            last_updated = None
         channel_info = self.yt_data.get_channel_data()
 
         if not channel_info:
             logger.error("Channel info retrieval failed. Aborting.")
             return
 
-        creation_date = DataProcessor.parse_iso_date(
-            channel_info.creation_date
-        )
+        creation_date = DataProcessor.parse_iso_date(channel_info.creation_date)
 
-        start_date, end_date = self.get_range_date(
-            last_updated,
-            creation_date
-        )
+        start_date, end_date = self.get_range_date(last_updated, creation_date)
 
         if start_date is None:
             logger.info("System is already up to date.")
@@ -79,9 +78,7 @@ class Updater:
             logger.error(f"Critical error during ETL flow: {e}")
 
     def get_range_date(
-        self,
-        last_update: Optional[date],
-        channel_creation: date
+        self, last_update: Optional[date], channel_creation: date
     ) -> Tuple[Optional[date], Optional[date]]:
         """
         Calculates the sync window based on previous records.
@@ -101,9 +98,7 @@ class Updater:
         return start_date, date.today()
 
     def _verify_last_update(
-        self,
-        last_update: Optional[date],
-        channel_creation: date
+        self, last_update: Optional[date], channel_creation: date
     ) -> Optional[date]:
         """
         Validates the starting point for the update process.

@@ -4,20 +4,21 @@ Responsible only for rendering the UI based on a provided ViewModel.
 """
 
 import os
-import time
 import threading
+import time
 from datetime import date, timedelta
+
 import pandas as pd
 import plotly.express as px
-from plotly.graph_objs import Figure
 import streamlit as st
+from plotly.graph_objs import Figure
 
-from models.dashboard_data import DashboardViewModel
-from services.dashboard_provider import DashboardDataProvider
+from config import AUTO_SHUTDOWN_TIMEOUT_SECONDS, DB_NAME
 from database.connection import DatabaseManager
 from database.repository import YoutubeRepository
+from models.dashboard_data import DashboardViewModel
+from services.dashboard_provider import DashboardDataProvider
 from utils.paths import data_path
-from config import AUTO_SHUTDOWN_TIMEOUT_SECONDS, DB_NAME
 
 LAST_ACTIVITY_TIME = time.time()
 
@@ -36,6 +37,7 @@ class YoutubeDashboard:
     def _setup_auto_shutdown(self) -> None:
         """Starts a background thread to kill the process after idleness."""
         if "watcher_started" not in st.session_state:
+
             def watcher() -> None:
                 while True:
                     time.sleep(30)
@@ -70,10 +72,10 @@ class YoutubeDashboard:
         stats_df = self.view_model.channel_stats
         if not stats_df.empty:
             with col_kpi1:
-                total_views = stats_df.iloc[0]['total_views']
+                total_views = stats_df.iloc[0]["total_views"]
                 st.metric("Total de views", self._format_value(total_views))
             with col_kpi2:
-                top_sum = self.view_model.top_videos['views'].sum()
+                top_sum = self.view_model.top_videos["views"].sum()
                 st.metric("Top 10", self._format_value(top_sum))
 
     def render_top_content(self) -> None:
@@ -101,46 +103,46 @@ class YoutubeDashboard:
 
         st.metric(
             f"Views ({curr_date.strftime('%B')})",
-            self._format_value(self.view_model.current_month_views)
+            self._format_value(self.view_model.current_month_views),
         )
         st.metric(
             f"Views ({prev_date.strftime('%B')})",
-            self._format_value(self.view_model.previous_month_views)
+            self._format_value(self.view_model.previous_month_views),
         )
         st.metric(
-            "Crecimiento Mensual %", 
-            f"{self.view_model.monthly_growth_percentage * 100:.2f}%"
+            "Crecimiento Mensual %",
+            f"{self.view_model.monthly_growth_percentage * 100:.2f}%",
         )
         st.metric(
-            "Promedio Vistas por Video", 
-            self._format_value(self.view_model.average_views_per_video)
+            "Promedio Vistas por Video",
+            self._format_value(self.view_model.average_views_per_video),
         )
 
     def render_history_section(self) -> None:
         """Renders the historical chart with a date range slider."""
         col_label, col_filter = st.columns([2, 1])
         daily_df = self.view_model.daily_metrics
-        
+
         with col_label:
             st.write("**Histórico de views por Año, Trimestre y Mes**")
-        
+
         if daily_df.empty:
             return
 
         with col_filter:
-            min_date = daily_df['fetch_date'].min()
+            min_date = daily_df["fetch_date"].min()
             max_allowed = max(min_date, date.today() - timedelta(days=2))
-            
+
             date_range = st.select_slider(
                 "Rango de fecha",
                 options=pd.date_range(min_date, max_allowed).date,
                 value=(min_date, max_allowed),
-                label_visibility="collapsed"
+                label_visibility="collapsed",
             )
 
         filtered_df = daily_df[
-            (daily_df['fetch_date'] >= date_range[0]) &
-            (daily_df['fetch_date'] <= date_range[1])
+            (daily_df["fetch_date"] >= date_range[0])
+            & (daily_df["fetch_date"] <= date_range[1])
         ]
 
         if not filtered_df.empty:
@@ -152,39 +154,36 @@ class YoutubeDashboard:
     def _build_donut_chart(self, df: pd.DataFrame) -> Figure:
         """Constructs and styles the Plotly donut chart."""
         fig = px.pie(
-            df, values="views", names="title",
-            hole=0.5, template="plotly_white"
+            df, values="views", names="title", hole=0.5, template="plotly_white"
         )
         fig.update_traces(
-            textposition='outside',
-            textinfo='value+percent',
-            marker=dict(line=dict(color='#FFFFFF', width=2))
+            textposition="outside",
+            textinfo="value+percent",
+            marker=dict(line=dict(color="#FFFFFF", width=2)),
         )
         fig.update_layout(
             showlegend=True,
-            legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.1),
+            legend=dict(
+                orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.1
+            ),
             height=450,
-            margin=dict(t=30, b=30, l=0, r=150)
+            margin=dict(t=30, b=30, l=0, r=150),
         )
         return fig
 
     def _build_area_chart(self, df: pd.DataFrame) -> Figure:
         """Constructs and styles the Plotly area chart."""
         fig = px.area(
-            df, x="fetch_date", y="views",
-            template="plotly_white", markers=True
+            df, x="fetch_date", y="views", template="plotly_white", markers=True
         )
-        fig.update_traces(
-            fillcolor="rgba(41, 182, 246, 0.2)",
-            line_color="#29b6f6"
-        )
+        fig.update_traces(fillcolor="rgba(41, 182, 246, 0.2)", line_color="#29b6f6")
         fig.update_layout(xaxis_title=None, yaxis_title=None, height=350)
         return fig
 
     def run(self) -> None:
         """Main orchestration for the dashboard view."""
         self._update_activity()
-        
+
         self.render_header()
         st.divider()
         self.render_top_content()
@@ -193,18 +192,14 @@ class YoutubeDashboard:
 
 
 if __name__ == "__main__":
-    st.set_page_config(
-        page_title="YT Channel Report",
-        page_icon="📊",
-        layout="wide"
-    )
+    st.set_page_config(page_title="YT Channel Report", page_icon="📊", layout="wide")
 
     db_path = data_path(DB_NAME)
     db_manager = DatabaseManager(db_path)
     repository = YoutubeRepository(db_manager)
-    
+
     provider = DashboardDataProvider(repository)
     dashboard_data = provider.build_view_model()
-    
+
     app = YoutubeDashboard(dashboard_data)
     app.run()

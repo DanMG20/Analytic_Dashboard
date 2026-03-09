@@ -1,7 +1,7 @@
 import sqlite3
 from contextlib import contextmanager
-from typing import Generator
 from datetime import date
+from typing import Generator
 
 
 class DatabaseManager:
@@ -20,8 +20,7 @@ class DatabaseManager:
         Yields a transactional SQLite connection.
         """
         connection = sqlite3.connect(
-            self._db_path,
-            detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
+            self._db_path, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
         )
         connection.row_factory = sqlite3.Row
         try:

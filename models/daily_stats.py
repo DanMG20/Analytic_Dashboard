@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class DailyStats(BaseModel):
     """
     Represents performance metrics for a single day.
@@ -12,7 +13,7 @@ class DailyStats(BaseModel):
 
     """
 
-    date : str
-    views : int
-    subs_gained : int
-    avg_view_duration: int  
+    date: str
+    views: int
+    subs_gained: int
+    avg_view_duration: int

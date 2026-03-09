@@ -1,6 +1,7 @@
 import logging
-from utils.paths import data_path
+
 from config import LOG_FILE
+from utils.paths import data_path
 
 log_path = data_path(LOG_FILE)
 

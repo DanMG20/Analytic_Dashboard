@@ -1,15 +1,19 @@
 import os
 import pickle
 from typing import Optional
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build, Resource
-from google.auth.transport.requests import Request
+
 from google.auth.exceptions import RefreshError
+from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import Resource, build
+
+from config import CREDENTIALS_PATH, SCOPES, TOKEN_PATH
 from utils.logger import get_logger
-from config import (TOKEN_PATH,CREDENTIALS_PATH,SCOPES)
 
 logger = get_logger(__name__)
+
+
 class YoutubeAuth:
     """
     Handles Google API credentials lifecycle (Load, Login, Refresh, Save).
@@ -23,9 +27,7 @@ class YoutubeAuth:
         Builds a Google API service resource.
         """
         return build(
-            serviceName=service_name,
-            version=version,
-            credentials=self.credentials
+            serviceName=service_name, version=version, credentials=self.credentials
         )
 
     def _authenticate(self) -> Credentials:
@@ -49,7 +51,7 @@ class YoutubeAuth:
     def _load_token(self) -> Optional[Credentials]:
         if not os.path.exists(TOKEN_PATH):
             return None
-        
+
         try:
             with open(TOKEN_PATH, "rb") as token:
                 return pickle.load(token)
@@ -65,15 +67,12 @@ class YoutubeAuth:
     def _login(self) -> Credentials:
         if not os.path.exists(CREDENTIALS_PATH):
             raise FileNotFoundError(f"Secrets not found at: {CREDENTIALS_PATH}")
-            
-        flow = InstalledAppFlow.from_client_secrets_file(
-            CREDENTIALS_PATH, 
-            SCOPES
-        )
+
+        flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, SCOPES)
         creds = flow.run_local_server(
-            port=0, 
-            host='localhost', 
-            success_message="Auth complete. You can close this tab."
+            port=0,
+            host="localhost",
+            success_message="Auth complete. You can close this tab.",
         )
         logger.info("Initial Google login successful.")
         return creds

@@ -1,5 +1,6 @@
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
+
 from services.updater import Updater
 from utils.logger import get_logger
 
@@ -39,10 +40,12 @@ class Scheduler:
             trigger=trigger,
             id="youtube_etl_sync",
             name="Daily YouTube Sync",
-            replace_existing=True
+            replace_existing=True,
         )
 
-        logger.info(f"Scheduler started. Job scheduled daily at {hour:02d}:{minute:02d}")
+        logger.info(
+            f"Scheduler started. Job scheduled daily at {hour:02d}:{minute:02d}"
+        )
 
         try:
             self.scheduler.start()
