@@ -4,11 +4,10 @@ from typing import Optional
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build, Resource
 from google.auth.transport.requests import Request
+from google.auth.exceptions import RefreshError
 from google.oauth2.credentials import Credentials
 from utils.logger import get_logger
 from config import (TOKEN_PATH,CREDENTIALS_PATH,SCOPES)
-
-
 
 logger = get_logger(__name__)
 class YoutubeAuth:
@@ -38,7 +37,7 @@ class YoutubeAuth:
         if creds and creds.expired and creds.refresh_token:
             try:
                 creds = self._refresh_token(creds)
-            except Exception as e:
+            except RefreshError as e:
                 logger.warning(f"Refresh failed: {e}. Starting login.")
                 creds = self._login()
         else:

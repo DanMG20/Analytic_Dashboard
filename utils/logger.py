@@ -1,16 +1,15 @@
 import logging
-from pathlib import Path
 from utils.paths import data_path
+from config import LOG_FILE
 
+log_path = data_path(LOG_FILE)
 
-
-LOG_FILE = data_path("dashboard.log")
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
     datefmt="%H:%M",
-    handlers=[logging.FileHandler(LOG_FILE, encoding="utf-8"), logging.StreamHandler()],
+    handlers=[logging.FileHandler(log_path, encoding="utf-8"), logging.StreamHandler()],
 )
 
 

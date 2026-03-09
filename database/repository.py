@@ -151,7 +151,20 @@ class YoutubeRepository:
                 return None, [], []
 
     def _get_channel_stats(self, conn: sqlite3.Connection) -> Optional[ChannelStats]:
-        cursor = conn.execute("SELECT * FROM channel_stats LIMIT 1")
+
+        query = """
+                SELECT 
+                    name,
+                    creation_date,
+                    total_views,
+                    total_subscribers,
+                    total_videos,
+                    last_updated
+                FROM channel_stats
+                ORDER BY last_updated DESC
+                LIMIT 1
+                """
+        cursor = conn.execute(query)
         row = cursor.fetchone()
         return ChannelStats(**dict(row)) if row else None
 

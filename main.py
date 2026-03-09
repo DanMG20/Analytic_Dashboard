@@ -10,7 +10,7 @@ from services.updater import Updater
 from scheduler.trigger import Scheduler
 from utils.logger import get_logger
 from utils.paths import data_path
-
+from config import DB_NAME, SCHEDULER_DEFAULT_HOUR, SCHEDULER_DEFAULT_MINUTE
 logger = get_logger(__name__)
 
 
@@ -47,7 +47,7 @@ def build_updater() -> Updater:
     Returns:
         A fully configured Updater instance.
     """
-    db_path = data_path("youtube_stats.db")
+    db_path = data_path(DB_NAME)
     db_manager = DatabaseManager(db_path)
     repository = YoutubeRepository(db_manager)
 
@@ -73,26 +73,22 @@ def main() -> None:
     updater = build_updater()
 
     if "--scheduled" in sys.argv:
-        # We redefine the run method so the scheduler opens the UI
         original_run = updater.run
 
         def task_with_ui():
             original_run()
             logger.info("Daily update finished. Opening dashboard...")
-            # Use wait=False because we are inside a background thread
             launch_dashboard(wait=False)
 
         updater.run = task_with_ui
         
         scheduler = Scheduler(updater)
-        # Set to 11:00 AM or your preferred testing time
-        scheduler.start(hour=11, minute=0)
+        scheduler.start(hour=SCHEDULER_DEFAULT_HOUR, minute=SCHEDULER_DEFAULT_MINUTE)
         return
 
     updater.run()
 
     logger.info("Launching dashboard...")
-    # Manual mode: we wait for the process to keep the terminal busy
     launch_dashboard(wait=True)
 
 

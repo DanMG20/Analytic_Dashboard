@@ -7,6 +7,10 @@ from models.daily_stats import DailyStats
 from models.video_stats import VideoStats
 
 class RawData(BaseModel): 
+    """
+    Joins all data obtained from Youtube Analytics 
+    adn Youtube Data into a single object. 
+    """
     channel_data : ChannelInfo
     videos_metadata : List[VideoMetadata]
     daily_stats : List[DailyStats]

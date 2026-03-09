@@ -45,7 +45,6 @@ class Updater:
         logger.info("Starting update cycle...")
 
         last_updated_str  = self.repository.get_last_updated_date()
-
         last_updated = DataProcessor.parse_iso_date(last_updated_str)
         channel_info = self.yt_data.get_channel_data()
 

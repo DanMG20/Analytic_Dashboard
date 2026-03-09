@@ -16,27 +16,27 @@ class DataBuilder:
 
 
 
-def build(self, start_date: date, end_date: date) -> RawData:
-        """
-        Orchestrates data gathering from multiple API sources.
-        
-        Raises:
-            ValueError: If core channel data cannot be retrieved.
-        """
-        channel_data = self.yt_data.get_channel_data()
-        if not channel_data:
-            logger.error("Failed to retrieve channel data. Cannot build RawData.")
-            raise ValueError("Channel data is required to build the dataset.")
+    def build(self, start_date: date, end_date: date) -> RawData:
+            """
+            Orchestrates data gathering from multiple API sources.
             
-        playlist_id = channel_data.uploads_playlist_id
-        videos_metadata = self.yt_data.get_all_videos_metadata(playlist_id)
-        video_ids = [v.id for v in videos_metadata]
-        daily_stats = self.yt_analytics.get_daily_stats(start_date,end_date)
-        video_stats = self.yt_analytics.get_video_stats(start_date,end_date,video_ids)
-        return RawData(
-            channel_data= channel_data,
-            videos_metadata = videos_metadata,
-            daily_stats = daily_stats,
-            video_stats = video_stats,
-            last_updated = end_date,
-        )
+            Raises:
+                ValueError: If core channel data cannot be retrieved.
+            """
+            channel_data = self.yt_data.get_channel_data()
+            if not channel_data:
+                logger.error("Failed to retrieve channel data. Cannot build RawData.")
+                raise ValueError("Data channel creation is required to build the dataset.")
+                
+            playlist_id = channel_data.uploads_playlist_id
+            videos_metadata = self.yt_data.get_all_videos_metadata(playlist_id)
+            video_ids = [v.id for v in videos_metadata]
+            daily_stats = self.yt_analytics.get_daily_stats(start_date,end_date)
+            video_stats = self.yt_analytics.get_video_stats(start_date,end_date,video_ids)
+            return RawData(
+                channel_data= channel_data,
+                videos_metadata = videos_metadata,
+                daily_stats = daily_stats,
+                video_stats = video_stats,
+                last_updated = end_date,
+            )

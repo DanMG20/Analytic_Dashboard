@@ -1,11 +1,13 @@
 from typing import Optional, List, Dict, Any
 from utils.retry import api_retry
 from googleapiclient.errors import HttpError
-
 from api.youtube_auth import YoutubeAuth
 from models.channel_info import ChannelInfo
 from models.video_metadata import VideoMetadata
 from utils.logger import get_logger
+
+from config import (
+    YT_API_SERVICE_NAME, YT_API_VERSION, MAX_RESULTS_PER_PAGE, YT_DATA_PART)
 
 logger = get_logger(__name__)
 
@@ -14,7 +16,7 @@ class YouTubeData:
 
     def __init__(self, auth_client: YoutubeAuth):
         """Initializes the service using an authenticated client."""
-        self.service = auth_client.get_service("youtube", "v3")
+        self.service = auth_client.get_service(YT_API_SERVICE_NAME, YT_API_VERSION)
 
     def get_channel_data(self) -> Optional[ChannelInfo]:
         """Fetches channel info and its uploads playlist ID."""
@@ -53,7 +55,7 @@ class YouTubeData:
     def _request_channel_data(self) -> Dict[str, Any]:
         """Raw request for channel statistics and content details."""
         return self.service.channels().list(
-            part="snippet,contentDetails,statistics",
+            part=YT_DATA_PART,
             mine=True
         ).execute()
 
@@ -70,7 +72,7 @@ class YouTubeData:
 
             if not next_page_token:
                 break
-        
+        logger.info("All video's Metadata succesfully obtained")
         return all_items
     
 
@@ -82,10 +84,10 @@ class YouTubeData:
             ) -> Dict[str, Any]:
             
         return  (self.service.playlistItems().list(
-                part="snippet,contentDetails",
+                part=YT_DATA_PART,
                 playlistId=playlist_id,
                 pageToken=next_page_token,
-                maxResults=50
+                maxResults=MAX_RESULTS_PER_PAGE
             ).execute())
 
     def _map_channel_info(self, item: Dict[str, Any]) -> ChannelInfo:

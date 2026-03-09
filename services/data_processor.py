@@ -7,7 +7,7 @@ from utils.logger import get_logger
 logger = get_logger(__name__)
 
 class DataProcessor:
-    """Process the data obtained from youtube API's."""
+    """Process the raw data obtained from youtube API's."""
 
     def __init__(self,raw_data: RawData):
         self.raw_data = raw_data
@@ -31,16 +31,11 @@ class DataProcessor:
         video_metrics = self._transform_video_metrics()
 
         return channel_stats, daily_metrics , video_metrics
-    
-    def process_creation_date(self, date: str ) ->date:
-        return datetime.fromisoformat(date.replace("Z", "+00:00")).date()
 
     def _transform_channel_stats(self) -> ChannelStats:
         api_channel = self.raw_data.channel_data
         
-        creation_date = datetime.fromisoformat(
-            api_channel.creation_date.replace("Z", "+00:00")
-        ).date()
+        creation_date =self.parse_iso_date(api_channel.creation_date)
 
         return ChannelStats(
             name=api_channel.name,
@@ -64,6 +59,9 @@ class DataProcessor:
 
     
     def _transform_video_metrics(self) -> List[VideoMetrics]:
+        """
+        Joins all video data in a single table
+        """
         
         titles_map = {video.id: video.title for video in self.raw_data.videos_metadata}
         return [

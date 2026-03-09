@@ -6,14 +6,14 @@ from api.youtube_auth import YoutubeAuth
 from models.daily_stats import DailyStats
 from models.video_stats import VideoStats
 from utils.logger import get_logger
-
+from config import (ANALYTICS_API_SERVICE_NAME,ANALYTICS_API_VERSION,ANALYTICS_CHUNK_SIZE)
 logger = get_logger(__name__)
 
 class YouTubeAnalytics:
     """Gateway to interact with YouTube Analytics API v2."""
 
     def __init__(self, auth_client: YoutubeAuth):
-        self.service = auth_client.get_service("youtubeAnalytics", "v2")
+        self.service = auth_client.get_service(ANALYTICS_API_SERVICE_NAME, ANALYTICS_API_VERSION)
 
     def get_daily_stats(self, start_date: date, end_date: date) -> List[DailyStats]:
         """Fetches historical channel data."""
@@ -59,7 +59,7 @@ class YouTubeAnalytics:
     ) -> Dict[str, VideoStats]:
         """Fetches all batches and returns a dictionary for fast lookup."""
         results_map: Dict[str, VideoStats] = {}
-        chunks = [video_ids[i:i + 200] for i in range(0, len(video_ids), 200)]
+        chunks = [video_ids[i:i + ANALYTICS_CHUNK_SIZE] for i in range(0, len(video_ids), ANALYTICS_CHUNK_SIZE)]
 
         for chunk in chunks:
             try:
