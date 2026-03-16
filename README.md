@@ -1,123 +1,317 @@
-# YouTube Analytics ETL & Dashboard
+# YouTube Analytics ETL Platform
 
 [![Python](https://img.shields.io/badge/Python-3.14-blue)](https://www.python.org/)
 [![SQLite](https://img.shields.io/badge/SQLite-3.0-lightgrey)](https://www.sqlite.org/index.html)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.28-orange)](https://streamlit.io/)
+[![Power
+BI](https://img.shields.io/badge/Power_BI-Pro-yellow)](https://powerbi.microsoft.com/)
 
----
+------------------------------------------------------------------------
 
 ## Table of Contents
-1. [Overview](#overview)
-2. [Features](#features)
-3. [Tech Stack](#tech-stack)
-4. [Prerequisites](#prerequisites)
-5. [Installation](#installation)
-6. [Usage Options](#usage-options)
-   - [Option 1: Scheduled Terminal Process](#option-1-scheduled-terminal-process)
-   - [Option 2: Standalone Execution (Windows Task Scheduler)](#option-2-standalone-execution-windows-task-scheduler)
-7. [Screenshots](#screenshots) 
-8. [Future Scope (Roadmap)](#future-scope-roadmap)
 
----
+1.  Overview
+2.  Architecture
+3.  Two Dashboard Implementations
+4.  Streamlit Version
+5.  Power BI Version
+6.  Tech Stack
+7.  Prerequisites
+8.  Installation
+9.  Usage Options
+10. Screenshots
+11. Future Scope (Roadmap)
 
-## Overview
-As a YouTube content creator, tracking detailed month-over-month growth using the native YouTube Studio can be time-consuming and cluttered with excessive data. This project solves that problem by automating the extraction, transformation, and visualization of key performance indicators (KPIs) into a clean, intuitive Streamlit dashboard.
+------------------------------------------------------------------------
 
-It automatically fetches daily metrics, stores them locally in a database, and provides a focused view of channel growth, top-performing videos, and historical trends.
+# Overview
 
----
+As a YouTube content creator, tracking detailed month‑over‑month growth
+using the native YouTube Studio can be time‑consuming and cluttered with
+excessive data.
 
-## Features
-* **Automated Data Extraction:** Connects to YouTube Data API v3 and YouTube Analytics API v2.  
-* **Local Persistence:** Uses SQLite to maintain a historical record of channel statistics without relying on constant API calls.  
-* **Passive View Dashboard:** A Streamlit UI decoupled from the business logic, presenting clean visualizations (Donut charts, Area charts) using Plotly.  
-* **Dual Execution Modes:**
-  - Run continuously in the background using an internal scheduler.  
-  - Execute as a standalone application via Windows Task Scheduler.  
+This project solves that problem by building a **modular ETL pipeline**
+that extracts YouTube data, stores it locally, and exposes it through
+**two different visualization layers**:
 
----
+1.  **Streamlit Dashboard** -- A Python‑native web interface.
+2.  **Power BI Dashboard** -- A professional Business Intelligence
+    visualization layer.
 
-## Tech Stack
-* **Language:** Python 3.14.0  
-* **Data Handling:** Pandas, Pydantic  
-* **Database:** SQLite3  
-* **UI/Visualization:** Streamlit, Plotly  
-* **Authentication:** Google OAuth 2.0 (`google-auth-oauthlib`)  
-* **Architecture:** Decoupled ETL (Extract, Transform, Load)  
+Both dashboards use the **same underlying ETL pipeline and SQLite
+database**, allowing the project to demonstrate multiple approaches to
+data visualization and analytics delivery.
 
----
+------------------------------------------------------------------------
 
-## Prerequisites
-This application uses Google OAuth 2.0. To run it locally, you need a `google_credentials.json` file from the Google Cloud Console with permissions for the YouTube Data and Analytics APIs.
+# Architecture
 
-1. Obtain your OAuth 2.0 Client IDs from Google Cloud.  
-2. Place the downloaded JSON file at: `credentials/google_credentials.json`.  
-*(Note: As this is currently an unpublished test app, credentials are restricted. Recruiters or evaluators may request test access directly from the author).*
+The project follows a **Decoupled ETL Architecture**:
 
----
+Extract → Transform → Load → Presentation
 
-## Installation
+-   **Extract:** Pulls data from YouTube Data API v3 and YouTube
+    Analytics API v2.
+-   **Transform:** Cleans and structures data using Pandas and Pydantic.
+-   **Load:** Stores historical records in SQLite.
+-   **Presentation Layer:** Either Streamlit or Power BI consumes the
+    database.
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/youtube-analytic-dashboard.git
-   cd youtube-analytic-dashboard
-   ```
-2. Create and activate your virtual environment (optional but recommended):
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # Linux/Mac
-   venv\Scripts\activate     # Windows
-   ```
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+This architecture allows the visualization layer to change without
+affecting the data pipeline.
 
----
+------------------------------------------------------------------------
 
-## Usage Options
+## Repository Structure & Branches
 
-### Option 1: Scheduled Terminal Process
-You can run the application in a terminal to act as a daemon. By default, it will trigger the ETL process daily at **11:00 AM**.
+This repository contains **two alternative dashboard implementations**
+that share the same ETL pipeline but differ in the presentation layer.
 
-```bash
-python main.py --scheduled
+Each implementation lives in a separate branch.
+
+  -----------------------------------------------------------------------
+  Branch                  Dashboard Technology    Description
+  ----------------------- ----------------------- -----------------------
+  `main`                  Streamlit               Default version of the
+                                                  project with a
+                                                  Python-native dashboard
+
+  `powerbi-version`       Power BI                BI-focused
+                                                  implementation using a
+                                                  Power BI dashboard
+                                                  connected to the SQLite
+                                                  database
+  -----------------------------------------------------------------------
+
+### Switching Between Versions
+
+When cloning the repository, Git will default to the **Streamlit
+implementation**.
+
+``` bash
+git clone https://github.com/yourusername/youtube-analytic-dashboard.git
+cd youtube-analytic-dashboard
 ```
 
-### Option 2: Standalone Execution (Windows Task Scheduler)
-For personal computer use, avoiding an open terminal is preferred. The app can be compiled into a `.exe` (using PyInstaller) and triggered via Windows Task Scheduler.
+#### Streamlit Version (Default)
 
-Running the executable without the `--scheduled` flag will immediately run the ETL process, update the SQLite database, and launch the Streamlit dashboard in your default browser.
+The `main` branch contains the Streamlit dashboard.
 
-```bash
-# To run the raw script immediately:
+``` bash
+git checkout main
+```
+
+Running the application will update the database and launch the
+Streamlit dashboard locally.
+
+``` bash
 python main.py
 ```
 
----
+#### Power BI Version
 
-## Screenshots
+To use the Power BI implementation, switch to the `powerbi-version`
+branch.
 
-Here are some screenshots of the YouTube Analytics dashboard in action:
+``` bash
+git checkout powerbi-version
+```
 
-### Running on terminal for first time
-![Terminal](assets/screenshots/terminal.png)
-
-### Asking for google access with 2.0 Auth
-![Google Auth](assets/screenshots/access.png)
-
-### Dashboard
-![Top](assets/screenshots/dashboard_1.png)
-![Bottom](assets/screenshots/dashboard_2.png)
-
-### Code & running on scheduled mode
-![Code](assets/screenshots/code_scheduled.png)
+This version includes a **Power BI dashboard (`.pbix`)** that connects
+to the SQLite database generated by the ETL pipeline.
 
 
+# Streamlit Version
 
-## Future Scope (Roadmap)
-- **Database Migration:** Transition from SQLite to PostgreSQL for more robust, concurrent data handling.  
-- **BI Integration:** Explore a direct connection to Microsoft Power BI as an alternative presentation layer to Streamlit.  
-- **Advanced Error Resilience:** Implement a more robust retry algorithm (e.g., Tenacity) for edge-case network failures during API requests.
+The **Streamlit version** provides a Python-native dashboard that runs
+locally in a browser.
+
+### Advantages
+
+-   Fully Python-based stack
+-   Easy to run locally
+-   No external services required
+-   Great for rapid prototyping
+-   Direct integration with Python visual libraries (Plotly)
+
+### Disadvantages
+
+-   Limited UI flexibility compared to BI tools
+-   Less optimized for large datasets
+-   No native enterprise reporting features
+
+### Visualization Stack
+
+-   Streamlit
+-   Plotly
+-   SQLite
+
+### How it Works
+
+Running the application launches the Streamlit dashboard automatically
+after updating the database.
+
+``` bash
+python main.py
+```
+
+------------------------------------------------------------------------
+
+# Power BI Version
+
+The **Power BI version** separates the visualization layer from Python
+entirely.
+
+The ETL pipeline updates the SQLite database, and **Power BI connects
+directly to that database**.
+
+### Advantages
+
+-   Professional-grade visualizations
+-   Advanced filtering and drill-down capabilities
+-   Rich interactive reports
+-   Better suited for analytics presentation
+-   Supports cloud dashboards
+
+### Disadvantages
+
+-   Requires Power BI Desktop
+-   Gateway required for automatic refresh
+-   Not fully Python-native
+
+### Visualization Stack
+
+-   Power BI Desktop
+-   Power BI Service
+-   Power BI Gateway
+
+### Data Flow
+
+Python ETL → SQLite Database → Power BI Dashboard
+
+------------------------------------------------------------------------
+
+# Tech Stack
+
+Core Pipeline
+
+-   Python 3.14
+-   Pandas
+-   Pydantic
+-   SQLite3
+-   Google OAuth 2.0
+
+Visualization Options
+
+Streamlit Stack
+
+-   Streamlit
+-   Plotly
+
+Power BI Stack
+
+-   Power BI Desktop
+-   Power BI Service
+-   Power BI Gateway
+
+------------------------------------------------------------------------
+
+# Prerequisites
+
+This application requires **Google OAuth credentials** to access the
+YouTube APIs.
+
+1.  Obtain OAuth 2.0 Client IDs from Google Cloud.
+2.  Place the credentials file at:
+
+credentials/google_credentials.json
+
+Note:
+
+Because this is currently a personal test project, the Google app is
+restricted. Recruiters or evaluators may request temporary access.
+
+------------------------------------------------------------------------
+
+# Installation
+
+Clone the repository:
+
+``` bash
+git clone https://github.com/yourusername/youtube-analytic-dashboard.git
+cd youtube-analytic-dashboard
+```
+
+Create a virtual environment:
+
+``` bash
+python -m venv venv
+source venv/bin/activate
+```
+
+Windows:
+
+``` bash
+venv\Scripts\activate
+```
+
+Install dependencies:
+
+``` bash
+pip install -r requirements.txt
+```
+
+------------------------------------------------------------------------
+
+# Usage Options
+
+### Scheduled Mode
+
+Run the ETL pipeline continuously with a daily schedule.
+
+``` bash
+python main.py --scheduled
+```
+
+### Immediate Execution
+
+Run the ETL pipeline immediately.
+
+``` bash
+python main.py
+```
+
+This will:
+
+1.  Fetch the latest YouTube analytics
+2.  Update the SQLite database
+3.  Allow either Streamlit or Power BI dashboards to consume the data
+
+------------------------------------------------------------------------
+
+# Screenshots
+
+Example screenshots included in the repository.
+
+Terminal Execution
+
+assets/screenshots/terminal.png
+
+Google OAuth Authentication
+
+assets/screenshots/access.png
+
+Streamlit Dashboard
+
+assets/screenshots/dashboard_1.png
+
+Power BI Dashboard
+
+assets/screenshots/PBI.png
+
+------------------------------------------------------------------------
+
+# Future Scope (Roadmap)
+
+-   Migration from SQLite → PostgreSQL
 
