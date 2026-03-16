@@ -64,24 +64,21 @@ affecting the data pipeline.
 
 ## Repository Structure & Branches
 
-This repository contains **two alternative dashboard implementations**
-that share the same ETL pipeline but differ in the presentation layer.
+This repository contains **two alternative dashboard implementations** that share the same ETL pipeline but differ in the presentation layer.
 
-Each implementation lives in a separate branch.
+| Branch | Dashboard Technology | Description |
+| :--- | :--- | :--- |
+| `main` | **Streamlit** | Default version of the project with a Python-native dashboard. |
+| `PowerBI_version` | **Power BI** | BI-focused implementation using a Power BI dashboard connected to the SQLite database. |
+### Switching Between Versions
 
-  -----------------------------------------------------------------------
-  Branch                  Dashboard Technology    Description
-  ----------------------- ----------------------- -----------------------
-  `main`                  Streamlit               Default version of the
-                                                  project with a
-                                                  Python-native dashboard
+When cloning the repository, Git will default to the **Streamlit
+implementation**.
 
-  `powerbi-version`       Power BI                BI-focused
-                                                  implementation using a
-                                                  Power BI dashboard
-                                                  connected to the SQLite
-                                                  database
-  -----------------------------------------------------------------------
+``` bash
+git clone https://github.com/yourusername/youtube-analytic-dashboard.git
+cd youtube-analytic-dashboard
+```
 
 ### Switching Between Versions
 
