@@ -3,13 +3,8 @@ import logging
 from typing import Any, Callable, TypeVar
 
 from googleapiclient.errors import HttpError
-from tenacity import (
-    before_sleep_log,
-    retry,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_exponential,
-)
+from tenacity import (before_sleep_log, retry, retry_if_exception_type,
+                      stop_after_attempt, wait_exponential)
 
 from utils.logger import get_logger
 

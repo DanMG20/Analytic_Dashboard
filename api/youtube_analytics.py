@@ -4,11 +4,8 @@ from typing import Any, Dict, List
 from googleapiclient.errors import HttpError
 
 from api.youtube_auth import YoutubeAuth
-from config import (
-    ANALYTICS_API_SERVICE_NAME,
-    ANALYTICS_API_VERSION,
-    ANALYTICS_CHUNK_SIZE,
-)
+from config import (ANALYTICS_API_SERVICE_NAME, ANALYTICS_API_VERSION,
+                    ANALYTICS_CHUNK_SIZE)
 from models.daily_stats import DailyStats
 from models.video_stats import VideoStats
 from utils.logger import get_logger

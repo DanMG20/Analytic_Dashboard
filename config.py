@@ -31,3 +31,5 @@ SCHEDULER_DEFAULT_HOUR: Final[int] = 11
 SCHEDULER_DEFAULT_MINUTE: Final[int] = 0
 # --- Logger settings ---
 LOG_FILE = "dashboard.log"
+# Power BI DASHBOARD
+POWER_BI_REPORT_URL = "https://app.powerbi.com/groups/me/reports/a6228587-34ec-4661-b947-6ede606f159a/e09839a16a7a8774973a?experience=power-bi"

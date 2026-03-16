@@ -1,8 +1,8 @@
-# YouTube Analytics ETL & Dashboard
+# YouTube Analytics ETL & Power BI Dashboard
 
 [![Python](https://img.shields.io/badge/Python-3.14-blue)](https://www.python.org/)
 [![SQLite](https://img.shields.io/badge/SQLite-3.0-lightgrey)](https://www.sqlite.org/index.html)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.28-orange)](https://streamlit.io/)
+[![Power BI](https://img.shields.io/badge/Power_BI-Pro-yellow)](https://powerbi.microsoft.com/)
 
 ---
 
@@ -12,28 +12,26 @@
 3. [Tech Stack](#tech-stack)
 4. [Prerequisites](#prerequisites)
 5. [Installation](#installation)
-6. [Usage Options](#usage-options)
-   - [Option 1: Scheduled Terminal Process](#option-1-scheduled-terminal-process)
-   - [Option 2: Standalone Execution (Windows Task Scheduler)](#option-2-standalone-execution-windows-task-scheduler)
-7. [Screenshots](#screenshots) 
-8. [Future Scope (Roadmap)](#future-scope-roadmap)
+6. [Power BI Gateway Setup](#power-bi-gateway-setup)
+7. [Usage Options](#usage-options)
+8. [Screenshots](#screenshots) 
+9. [Future Scope (Roadmap)](#future-scope-roadmap)
 
 ---
 
 ## Overview
-As a YouTube content creator, tracking detailed month-over-month growth using the native YouTube Studio can be time-consuming and cluttered with excessive data. This project solves that problem by automating the extraction, transformation, and visualization of key performance indicators (KPIs) into a clean, intuitive Streamlit dashboard.
+As a YouTube content creator, tracking detailed month-over-month growth using the native YouTube Studio can be time-consuming and cluttered with excessive data. This project solves that problem by automating the extraction and transformation of key performance indicators (KPIs) into a local database, which is then seamlessly connected to a rich, highly interactive Power BI dashboard.
 
-It automatically fetches daily metrics, stores them locally in a database, and provides a focused view of channel growth, top-performing videos, and historical trends.
+It automatically fetches daily metrics, stores them locally, and uses Power BI to provide a visually stunning and focused view of channel growth, top-performing videos, and historical trends. The visual impact and interactive filtering capabilities of Power BI significantly outclass standard Python-based web UI frameworks.
 
 ---
 
 ## Features
 * **Automated Data Extraction:** Connects to YouTube Data API v3 and YouTube Analytics API v2.  
 * **Local Persistence:** Uses SQLite to maintain a historical record of channel statistics without relying on constant API calls.  
-* **Passive View Dashboard:** A Streamlit UI decoupled from the business logic, presenting clean visualizations (Donut charts, Area charts) using Plotly.  
-* **Dual Execution Modes:**
-  - Run continuously in the background using an internal scheduler.  
-  - Execute as a standalone application via Windows Task Scheduler.  
+* **Advanced Visualizations:** A fully decoupled presentation layer using Power BI, offering superior UI aesthetics, cross-filtering, and dynamic tooltips.
+* **Automated Refresh via Gateway:** Data synchronization from the local SQLite database to the Power BI Cloud Service is handled natively by the Power BI Gateway.
+* **Background ETL Execution:** Run the Python data pipeline continuously in the background or trigger it via Windows Task Scheduler.
 
 ---
 
@@ -41,19 +39,20 @@ It automatically fetches daily metrics, stores them locally in a database, and p
 * **Language:** Python 3.14.0  
 * **Data Handling:** Pandas, Pydantic  
 * **Database:** SQLite3  
-* **UI/Visualization:** Streamlit, Plotly  
+* **UI/Visualization:** Microsoft Power BI  
 * **Authentication:** Google OAuth 2.0 (`google-auth-oauthlib`)  
 * **Architecture:** Decoupled ETL (Extract, Transform, Load)  
 
 ---
 
 ## Prerequisites
-This application uses Google OAuth 2.0. To run it locally, you need a `google_credentials.json` file from the Google Cloud Console with permissions for the YouTube Data and Analytics APIs.
+This application uses Google OAuth 2.0 for data retrieval and Power BI for visualization. 
 
-1. Obtain your OAuth 2.0 Client IDs from Google Cloud.  
-2. Place the downloaded JSON file at: `credentials/google_credentials.json`.  
-*(Note: As this is currently an unpublished test app, credentials are restricted. Recruiters or evaluators may request test access directly from the author).*
+1. **Google Cloud Credentials:** Obtain your OAuth 2.0 Client IDs from Google Cloud and place the downloaded JSON file at: `credentials/google_credentials.json`.  
+2. **Power BI Desktop:** Required to open and publish the `.pbix` dashboard file.
+3. **Power BI Standard/Personal Gateway:** Required to keep the published cloud dashboard synchronized with your local SQLite database.
 
+*(Note: As this is currently an unpublished test app, Google credentials are restricted. Recruiters or evaluators may request test access directly from the author).*
 ---
 
 ## Installation
@@ -108,16 +107,15 @@ Here are some screenshots of the YouTube Analytics dashboard in action:
 ![Google Auth](assets/screenshots/access.png)
 
 ### Dashboard
-![Top](assets/screenshots/dashboard_1.png)
-![Bottom](assets/screenshots/dashboard_2.png)
+![Top](assets/screenshots/PBI.png)
+
 
 ### Code & running on scheduled mode
 ![Code](assets/screenshots/code_scheduled.png)
 
-
+---
 
 ## Future Scope (Roadmap)
 - **Database Migration:** Transition from SQLite to PostgreSQL for more robust, concurrent data handling.  
-- **BI Integration:** Explore a direct connection to Microsoft Power BI as an alternative presentation layer to Streamlit.  
-- **Advanced Error Resilience:** Implement a more robust retry algorithm (e.g., Tenacity) for edge-case network failures during API requests.
+ 
 
