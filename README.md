@@ -292,19 +292,19 @@ Example screenshots included in the repository.
 
 Terminal Execution
 
-assets/screenshots/terminal.png
+![Terminal](assets/screenshots/terminal.png)
 
 Google OAuth Authentication
 
-assets/screenshots/access.png
+![Google Auth](assets/screenshots/access.png)
 
 Streamlit Dashboard
-
-assets/screenshots/dashboard_1.png
+![Top](assets/screenshots/dashboard_1.png)
+![Bottom](assets/screenshots/dashboard_2.png)
 
 Power BI Dashboard
 
-assets/screenshots/PBI.png
+![Full](assets/screenshots/PBI.png)
 
 ------------------------------------------------------------------------
 
